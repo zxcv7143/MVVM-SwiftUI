@@ -23,7 +23,7 @@ class MarvelViewModel: ObservableObject {
     init() {
         Publishers.system(
             initial: state,
-            reduce: Self.reduce,
+            reduce: reduce,
             scheduler: RunLoop.main,
             feedbacks: [
                 whenLoading(),
@@ -91,6 +91,8 @@ extension MarvelViewModel {
                 return true
             case (.loading, .loading):
                 return true
+            case (.loadingNewPage, .loadingNewPage):
+                return true
             default:
                 return false
             }
@@ -99,7 +101,17 @@ extension MarvelViewModel {
         case idle
         case loading
         case loaded([Character])
+        case loadingNewPage
         case error(Error)
+        
+        var characters: [Character]? {
+            get {
+                guard case .loaded(let characters) = self else {
+                    return nil
+                }
+                return characters
+            }
+        }
     }
     
     enum Event {
@@ -111,7 +123,7 @@ extension MarvelViewModel {
     }
     
     
-    static func reduce(_ state: State, _ event: Event) -> State {
+    func reduce(_ state: State, _ event: Event) -> State {
         switch state {
         case .idle:
                 switch event {
@@ -120,17 +132,30 @@ extension MarvelViewModel {
                 default:
                     return state
                 }
-        case .loading:
+        case .loading,
+             .loadingNewPage:
                 switch event {
                 case .onFailedToLoadCharacters(let error):
                     return .error(error)
-                case .onCharactersLoaded(let characters):
+                case .onCharactersLoaded(let newCharacters):
+                    if self.page > 0 && !self.characters.elementsEqual(newCharacters, by: { (character, result) -> Bool in
+                        character.id==result.id
+                    }) {
+                        self.characters.append(contentsOf: newCharacters)
+                    } else {
+                        self.characters = newCharacters
+                    }
                     return .loaded(characters)
                 default:
                     return state
                 }
         case .loaded:
-            return state
+            switch event {
+            case .onStartLoadingCharacters:
+                return .loadingNewPage
+            default:
+                return state
+            }
         case .error:
                 return state
         }
@@ -138,8 +163,8 @@ extension MarvelViewModel {
     
     func whenLoading() -> Feedback<State, Event> {
         Feedback { (state: State) -> AnyPublisher<Event, Never> in
-            guard case .loading = state else { return Empty().eraseToAnyPublisher() }
-            return MarvelAPI.characters(page: self.page, searchTerm: self.searchText).map({Event.onCharactersLoaded($0.data?.results ?? [])}).catch { Just(Event.onFailedToLoadCharacters($0)) }.eraseToAnyPublisher()
+           guard [.loading, .loadingNewPage].contains(state) else { return Empty().eraseToAnyPublisher() }
+           return MarvelAPI.characters(page: self.page, searchTerm: self.searchText).map({Event.onCharactersLoaded($0.data?.results ?? [])}).catch { Just(Event.onFailedToLoadCharacters($0)) }.eraseToAnyPublisher()
         }
     }
     

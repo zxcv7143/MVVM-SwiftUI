@@ -28,6 +28,8 @@ struct MasterView: View {
             return LoadingView().frame(maxHeight: .infinity).eraseToAnyView()
         case .error(let error):
             return Text(error.localizedDescription).eraseToAnyView()
+        case .loadingNewPage:
+            return self.characterList(characters: self.viewModel.characters).eraseToAnyView()
         case .loaded(let characters):
             return self.characterList(characters: characters).eraseToAnyView()
         }
@@ -41,14 +43,25 @@ struct MasterView: View {
                 ) {
                         VStack(spacing: 10) {
                             Text("\(character.name ?? "")").frame(maxWidth: .infinity, alignment: Alignment.leading)
-                            
-//                            if self.viewModel.state == .loading {
-//                                Divider()
-//                                LoadingView()
-//                            }
+                            if self.viewModel.state == .loadingNewPage && self.viewModel.characters.isLastItem(character) {
+                                Divider()
+                                LoadingView()
+                            }
+                        }.onAppear {
+                            self.listItemAppears(character)
                         }
                 }
             }
+        }
+    }
+}
+
+extension MasterView {
+    
+    private func listItemAppears<Item: Identifiable>(_ item: Item) {
+        if self.viewModel.characters.isThresholdItem(offset: 5, item: item)  {
+            self.viewModel.page+=1
+            self.viewModel.send(event: .onStartLoadingCharacters)
         }
     }
 }
