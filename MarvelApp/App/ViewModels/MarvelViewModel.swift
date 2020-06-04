@@ -13,12 +13,19 @@ import SwiftUI
 class MarvelViewModel: ObservableObject {
     
     private var cancellableSet: Set<AnyCancellable> = []
+    private let input = PassthroughSubject<Event, Never>()
+    
     @Published var characters: [Character] = []
     @Published private(set) var state: State = State.idle
-    @Published var searchText : String = ""
-    @Published var page: Int = 0
     
-    private let input = PassthroughSubject<Event, Never>()
+    var searchText : String = "" {
+        willSet {
+            self.page = 0
+            self.send(event: .onStartLoadingCharacters)
+        }
+    }
+    
+    var page: Int = 0
     
     init() {
         Publishers.system(
@@ -41,45 +48,6 @@ class MarvelViewModel: ObservableObject {
     func send(event: Event) {
         input.send(event)
     }
-        
-//    func loadCharacters(searchTerm: String = "") {
-//        do {
-//            self.state = MarvelViewModel.reduce(self.state, Event.onStartLoadingCharacters)
-//            try MarvelAPI.characters(page: self.page, searchTerm: searchTerm).sink(receiveCompletion: { completion in
-//                switch completion {
-//                case .failure(let error):
-//                    switch error {
-//                    case .serverError(code: let code, message: let reason):
-//                        print("Server error: \(code), reason: \(reason)")
-//                        self.state = MarvelViewModel.reduce(self.state, Event.onFailedToLoadCharacters(error))
-//                    case .decodingError:
-//                        print("Decoding error \(error)")
-//                        self.state = MarvelViewModel.reduce(self.state, Event.onFailedToLoadCharacters(error))
-//                    case .internalError:
-//                        print("Internal error \(error)")
-//                        self.state = MarvelViewModel.reduce(self.state, Event.onFailedToLoadCharacters(error))
-//                    }
-//                default: break
-//                }
-//            }) { (charactersResponse) in
-//                if let results = charactersResponse.data?.results {
-//                    self.state = MarvelViewModel.reduce(self.state, Event.onCharactersLoaded(results))
-//                    print("Characters: \(results)")
-//                    if self.page > 0 && !self.characters.elementsEqual(results, by: { (character, result) -> Bool in
-//                        character.id==result.id
-//                    }) {
-//                        self.characters.append(contentsOf: results)
-//                    } else {
-//                        self.characters = results
-//                    }
-//                }
-//            }
-//            .store(in: &cancellableSet)
-//        }
-//        catch {
-//             print("Unexpected error: \(error).")
-//        }
-//    }
 }
 
 extension MarvelViewModel {
@@ -138,7 +106,7 @@ extension MarvelViewModel {
                 case .onFailedToLoadCharacters(let error):
                     return .error(error)
                 case .onCharactersLoaded(let newCharacters):
-                    if self.page > 0 && !self.characters.elementsEqual(newCharacters, by: { (character, result) -> Bool in
+                   if self.page > 0 && !self.characters.elementsEqual(newCharacters, by: { (character, result) -> Bool in
                         character.id==result.id
                     }) {
                         self.characters.append(contentsOf: newCharacters)
@@ -156,19 +124,20 @@ extension MarvelViewModel {
             default:
                 return state
             }
-        case .error:
-                return state
+        default:
+            return state
         }
     }
     
     func whenLoading() -> Feedback<State, Event> {
         Feedback { (state: State) -> AnyPublisher<Event, Never> in
-           guard [.loading, .loadingNewPage].contains(state) else { return Empty().eraseToAnyPublisher() }
-           return MarvelAPI.characters(page: self.page, searchTerm: self.searchText).map({Event.onCharactersLoaded($0.data?.results ?? [])}).catch { Just(Event.onFailedToLoadCharacters($0)) }.eraseToAnyPublisher()
+            guard [.loading, .loadingNewPage].contains(state) else { return Empty().eraseToAnyPublisher() }
+            return MarvelAPI.characters(page: self.page, searchTerm: self.searchText).map({Event.onCharactersLoaded($0.data?.results ?? [])}).catch { Just(Event.onFailedToLoadCharacters($0)) }.eraseToAnyPublisher()
         }
     }
     
     func userInput(input: AnyPublisher<Event, Never>) -> Feedback<State, Event> {
         Feedback { _ in input }
     }
+    
 }

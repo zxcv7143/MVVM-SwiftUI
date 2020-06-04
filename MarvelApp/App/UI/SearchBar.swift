@@ -17,7 +17,6 @@ struct SearchBar: UIViewRepresentable {
 
         @Binding var text: String
         
-
         init(text: Binding<String>) {
             _text = text
         }
