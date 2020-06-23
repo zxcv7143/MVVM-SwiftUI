@@ -3,7 +3,7 @@
 //  test
 //
 //  Created by Ignacio Acisclo on 16/04/2020.
-//  Copyright © 2020 Ignacio Acisclo. All rights reserved.
+//   
 //
 
 import SwiftUI
@@ -15,12 +15,12 @@ private let dateFormatter: DateFormatter = {
     return dateFormatter
 }()
 
-struct ContentView: View {
+struct MainView: View {
     
     var body: some View {
         NavigationView {
-            MasterView().navigationBarTitle(Text("Characters"))
-            DetailView()
+            CharacterListView().navigationBarTitle(Text("Characters"))
+            DetailCharacterView()
         }
         .navigationViewStyle(DoubleColumnNavigationViewStyle())
     }
@@ -29,6 +29,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        MainView()
     }
 }

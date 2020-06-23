@@ -3,7 +3,7 @@
 //  MarvelApp
 //
 //  Created by Anton Zuev on 15/04/2020.
-//  Copyright © 2020 Ignacio Acisclo. All rights reserved.
+//   
 //
 import UIKit
 import Combine

@@ -3,12 +3,12 @@
 //  MarvelApp
 //
 //  Created by Ignacio Acisclo on 21/04/2020.
-//  Copyright © 2020 Ignacio Acisclo. All rights reserved.
+//   
 //
 
 import SwiftUI
 
-struct DetailView: View {
+struct DetailCharacterView: View {
     var character: Character?
     @Environment(\.imageCache) var cache: ImageCache
     

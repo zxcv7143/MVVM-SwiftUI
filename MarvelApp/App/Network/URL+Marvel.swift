@@ -3,7 +3,7 @@
 //  MarvelApp
 //
 //  Created by Ignacio Acisclo on 17/04/2020.
-//  Copyright © 2020 Ignacio Acisclo. All rights reserved.
+//   
 //
 
 import Foundation
