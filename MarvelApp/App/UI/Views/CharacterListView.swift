@@ -2,7 +2,7 @@
 //  MasterView.swift
 //  MarvelApp
 //
-//  Created by Ignacio Acisclo on 21/04/2020.
+// 21/04/2020.
 //   
 //
 

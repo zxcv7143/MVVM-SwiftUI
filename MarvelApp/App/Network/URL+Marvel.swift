@@ -2,7 +2,7 @@
 //  URL+Marvel.swift
 //  MarvelApp
 //
-//  Created by Ignacio Acisclo on 17/04/2020.
+// 17/04/2020.
 //   
 //
 

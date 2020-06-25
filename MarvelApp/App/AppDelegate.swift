@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  MarvelApp
 //
-//  Created by Ignacio Acisclo on 15/04/2020.
+//     .
 //   
 //
 

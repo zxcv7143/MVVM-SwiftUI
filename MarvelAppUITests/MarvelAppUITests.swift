@@ -2,7 +2,7 @@
 //  MarvelAppUITests.swift
 //  MarvelAppUITests
 //
-//  Created by Ignacio Acisclo on 15/04/2020.
+//     .
 //   
 //
 
