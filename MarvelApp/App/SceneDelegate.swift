@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         // Create the SwiftUI view that provides the window contents.
         let viewModel = CharactersListViewModel()
-        let contentView = MainView().environmentObject(viewModel)
+        let contentView = MainView().environmentObject(AnyViewModel(viewModel))
         
         // Use a UIHostingController as window root view controller.
         if let windowScene = scene as? UIWindowScene {

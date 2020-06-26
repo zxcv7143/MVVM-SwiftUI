@@ -10,11 +10,16 @@ import SwiftUI
 
 struct CharacterListView: View {
     @EnvironmentObject
-    var viewModel: CharactersListViewModel
+    var viewModel: AnyViewModel<CharactersListState, CharacterListInput>
+    
     
     var body: some View {
         VStack() {
-            SearchBar(text: $viewModel.searchText, placeholder: "Search characteres")
+            SearchBar(text: Binding(get: {self.viewModel.state.searchTerm},
+                                    set: { (newValue) in
+                                        self.viewModel.trigger(.newSearch(searchTerm: newValue))
+                            }),
+                      placeholder: "Search characteres")
             content
         }
     }
@@ -57,7 +62,7 @@ extension CharacterListView {
     
     private func listItemAppears<Item: Identifiable>(_ item: Item) {
         if self.viewModel.state.characters.isThresholdItem(offset: 5, item: item)  {
-            self.viewModel.page+=1
+            self.viewModel.trigger(.nextPage)
             self.viewModel.trigger(.reloadPage)
         }
     }

@@ -31,6 +31,7 @@ enum ViewModelState: Equatable {
 struct CharactersListState {
     var characters: [Character]
     var viewModelState: ViewModelState
+    var searchTerm: String
     
     mutating func addNewCharacters(addNewCharacters: [Character]) {
         characters.append(contentsOf: addNewCharacters)
@@ -43,6 +44,8 @@ struct CharactersListState {
 
 enum CharacterListInput {
     case reloadPage
+    case nextPage
+    case newSearch(searchTerm: String)
 }
 
 class CharactersListViewModel: ViewModel {
@@ -51,19 +54,19 @@ class CharactersListViewModel: ViewModel {
     var page: Int = 0
     
     @Published
-    var state: CharactersListState = CharactersListState(characters: [], viewModelState: .loading)
+    var state: CharactersListState = CharactersListState(characters: [], viewModelState: .loading, searchTerm: "")
     
-    @Published var searchText : String = ""
+//    @Published var searchText : String = ""
 
     init() {
-        loadCharacters(searchTerm: searchText)
+        loadCharacters(searchTerm: state.searchTerm)
         //set the waiting time limit at 1 sec when the value changes
-        $searchText.debounce(for: 1, scheduler: RunLoop.main)
-        .removeDuplicates()
-        .sink(receiveCompletion: {_ in}) { (searchTerm) in
-            self.page = 0
-            self.trigger(.reloadPage)
-        }.store(in: &cancellableSet)
+//        $searchText.debounce(for: 1, scheduler: RunLoop.main)
+//        .removeDuplicates()
+//        .sink(receiveCompletion: {_ in}) { (searchTerm) in
+//            self.page = 0
+//            self.trigger(.reloadPage)
+//        }.store(in: &cancellableSet)
     }
     
     func loadCharacters(searchTerm: String = "") {
@@ -89,10 +92,11 @@ class CharactersListViewModel: ViewModel {
                                 if self.page > 0 && !self.state.characters.elementsEqual(results, by: { (character, result) -> Bool in
                                     character.id==result.id
                                 }) {
-                                    self.state.addNewCharacters(addNewCharacters: results)
+                                    var addedCharacters = Array(self.state.characters)
+                                    addedCharacters.append(contentsOf: results)
+                                    self.state = CharactersListState(characters: addedCharacters, viewModelState: .loaded, searchTerm: searchTerm)
                                 } else {
-                                    
-                                    self.state = CharactersListState(characters: results, viewModelState: .loaded)
+                                    self.state = CharactersListState(characters: results, viewModelState: .loaded, searchTerm: searchTerm)
                                 }
                             }
                         }
@@ -103,7 +107,12 @@ class CharactersListViewModel: ViewModel {
     func trigger(_ input: CharacterListInput) {
         switch input {
         case .reloadPage:
-            self.loadCharacters(searchTerm: self.searchText)
+            self.loadCharacters(searchTerm: self.state.searchTerm)
+        case .nextPage:
+            self.page = self.page+1
+        case .newSearch(searchTerm: let searchTerm):
+            self.page = 0
+            self.loadCharacters(searchTerm: searchTerm)
         }
     }
     
