@@ -33,10 +33,6 @@ struct CharactersListState {
     var viewModelState: ViewModelState
     var searchTerm: String
     
-    mutating func addNewCharacters(addNewCharacters: [Character]) {
-        characters.append(contentsOf: addNewCharacters)
-    }
-    
     mutating func changeViewModelState(newViewModelState: ViewModelState) {
         viewModelState = newViewModelState
     }
