@@ -15,11 +15,7 @@ struct CharacterListView: View {
     
     var body: some View {
         VStack() {
-            SearchBar(text: Binding(get: {self.viewModel.state.searchTerm},
-                                    set: { (newValue) in
-                                        self.viewModel.trigger(.newSearch(searchTerm: newValue))
-                            }),
-                      placeholder: "Search characteres")
+            SearchBar(input: viewModel.searchTerm, placeholder: "Search characters")
             content
         }
     }

@@ -29,45 +29,47 @@ enum ViewModelState: Equatable {
 
 
 struct CharactersListState {
-    var characters: [Character]
-    var viewModelState: ViewModelState
-    var searchTerm: String
+    var characters: [Character] = []
+    var viewModelState: ViewModelState = .idle
+    var page: Int = 0
+    var searchTerm: CurrentValueSubject<String, Never> = CurrentValueSubject<String, Never>("")
     
     mutating func changeViewModelState(newViewModelState: ViewModelState) {
         viewModelState = newViewModelState
+    }
+    
+    mutating func changePage(newPageNumber: Int){
+        page = newPageNumber
     }
 }
 
 enum CharacterListInput {
     case reloadPage
     case nextPage
-    case newSearch(searchTerm: String)
+    case newSearch
 }
 
 class CharactersListViewModel: ViewModel {
     
     private var cancellableSet: Set<AnyCancellable> = []
-    var page: Int = 0
     
     @Published
-    var state: CharactersListState = CharactersListState(characters: [], viewModelState: .loading, searchTerm: "")
-    
-//    @Published var searchText : String = ""
+    var state: CharactersListState
 
-    init() {
-        loadCharacters(searchTerm: state.searchTerm)
-        //set the waiting time limit at 1 sec when the value changes
-//        $searchText.debounce(for: 1, scheduler: RunLoop.main)
-//        .removeDuplicates()
-//        .sink(receiveCompletion: {_ in}) { (searchTerm) in
-//            self.page = 0
-//            self.trigger(.reloadPage)
-//        }.store(in: &cancellableSet)
+    init(state: CharactersListState) {
+        self.state = state
+        loadCharacters(searchTermInput: state.searchTerm)
+        //set the waiting time limit at 0.5 sec when the value changes
+        self.state.searchTerm.debounce(for: 0.5, scheduler: RunLoop.main)
+        .removeDuplicates()
+        .sink(receiveCompletion: {_ in}) { (searchTerm) in
+            self.trigger(.newSearch)
+        }.store(in: &cancellableSet)
     }
     
-    func loadCharacters(searchTerm: String = "") {
+    func loadCharacters(searchTermInput: CurrentValueSubject<String, Never>) {
         do {
-            MarvelAPI.characters(page: self.page, searchTerm: searchTerm).sink(receiveCompletion: { completion in
+            MarvelAPI.characters(page: self.state.page, searchTerm: searchTermInput.value).sink(receiveCompletion: { completion in
                 switch completion {
                 case .failure(let error):
                     self.state.changeViewModelState(newViewModelState: .error(error))
@@ -85,14 +87,14 @@ class CharactersListViewModel: ViewModel {
                             if let results = charactersResponse.data?.results {
                                 self.state.changeViewModelState(newViewModelState: .loaded)
                                 print("Characters: \(results)")
-                                if self.page > 0 && !self.state.characters.elementsEqual(results, by: { (character, result) -> Bool in
+                                if self.state.page > 0 && !self.state.characters.elementsEqual(results, by: { (character, result) -> Bool in
                                     character.id==result.id
                                 }) {
                                     var addedCharacters = Array(self.state.characters)
                                     addedCharacters.append(contentsOf: results)
-                                    self.state = CharactersListState(characters: addedCharacters, viewModelState: .loaded, searchTerm: searchTerm)
+                                    self.state = CharactersListState(characters: addedCharacters, viewModelState: .loaded, page: self.state.page, searchTerm: searchTermInput)
                                 } else {
-                                    self.state = CharactersListState(characters: results, viewModelState: .loaded, searchTerm: searchTerm)
+                                    self.state = CharactersListState(characters: results, viewModelState: .loaded, page: self.state.page, searchTerm: searchTermInput)
                                 }
                             }
                         }
@@ -103,12 +105,12 @@ class CharactersListViewModel: ViewModel {
     func trigger(_ input: CharacterListInput) {
         switch input {
         case .reloadPage:
-            self.loadCharacters(searchTerm: self.state.searchTerm)
+            self.loadCharacters(searchTermInput: self.state.searchTerm)
         case .nextPage:
-            self.page = self.page+1
-        case .newSearch(searchTerm: let searchTerm):
-            self.page = 0
-            self.loadCharacters(searchTerm: searchTerm)
+            self.state.changePage(newPageNumber: self.state.page + 1)
+        case .newSearch:
+            self.state.changePage(newPageNumber: 0)
+            self.loadCharacters(searchTermInput: self.state.searchTerm)
         }
     }
     

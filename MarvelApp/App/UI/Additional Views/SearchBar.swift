@@ -7,22 +7,23 @@
 //
 
 import SwiftUI
+import Combine
 
 struct SearchBar: UIViewRepresentable {
 
-    @Binding var text: String
+    var input: CurrentValueSubject<String, Never>
     var placeholder: String
 
     class Coordinator: NSObject, UISearchBarDelegate {
 
-        @Binding var text: String
+       var inputStream: CurrentValueSubject<String, Never>
         
-        init(text: Binding<String>) {
-            _text = text
+        init(input: CurrentValueSubject<String, Never>) {
+            self.inputStream = input
         }
 
         func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-            text = searchText
+            inputStream.send(searchText)
             // if it´s empty hide the keyboard
 //            if searchText.count == 0 {
 //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -42,7 +43,7 @@ struct SearchBar: UIViewRepresentable {
     }
 
     func makeCoordinator() -> SearchBar.Coordinator {
-        return Coordinator(text: $text)
+        return Coordinator(input: self.input)
     }
 
     func makeUIView(context: UIViewRepresentableContext<SearchBar>) -> UISearchBar {
@@ -56,7 +57,7 @@ struct SearchBar: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UISearchBar, context: UIViewRepresentableContext<SearchBar>) {
-        uiView.text = text
+        uiView.text = self.input.value
     }
 }
 
