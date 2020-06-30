@@ -10,8 +10,8 @@ import UIKit
 import Combine
 import SwiftUI
 
-enum ViewModelState: Equatable {
-    static func == (lhs: ViewModelState, rhs: ViewModelState) -> Bool {
+enum ModelDataState: Equatable {
+    static func == (lhs: ModelDataState, rhs: ModelDataState) -> Bool {
         switch (lhs, rhs) {
         case (.idle, .idle):
             return true
@@ -30,12 +30,12 @@ enum ViewModelState: Equatable {
 
 struct CharactersListState {
     var characters: [Character] = []
-    var viewModelState: ViewModelState = .idle
+    var dataState: ModelDataState = .idle
     var page: Int = 0
     var searchTerm: CurrentValueSubject<String, Never> = CurrentValueSubject<String, Never>("")
     
-    mutating func changeViewModelState(newViewModelState: ViewModelState) {
-        viewModelState = newViewModelState
+    mutating func changeViewModelState(newViewModelState: ModelDataState) {
+        dataState = newViewModelState
     }
     
     mutating func changePage(newPageNumber: Int){
@@ -58,6 +58,7 @@ class CharactersListViewModel: ViewModel {
 
     init(state: CharactersListState) {
         self.state = state
+        self.state.changeViewModelState(newViewModelState: .loading)
         loadCharacters(searchTermInput: state.searchTerm)
         //set the waiting time limit at 0.5 sec when the value changes
         self.state.searchTerm.debounce(for: 0.5, scheduler: RunLoop.main)
@@ -92,9 +93,9 @@ class CharactersListViewModel: ViewModel {
                                 }) {
                                     var addedCharacters = Array(self.state.characters)
                                     addedCharacters.append(contentsOf: results)
-                                    self.state = CharactersListState(characters: addedCharacters, viewModelState: .loaded, page: self.state.page, searchTerm: searchTermInput)
+                                    self.state = CharactersListState(characters: addedCharacters, dataState: .loaded, page: self.state.page, searchTerm: searchTermInput)
                                 } else {
-                                    self.state = CharactersListState(characters: results, viewModelState: .loaded, page: self.state.page, searchTerm: searchTermInput)
+                                    self.state = CharactersListState(characters: results, dataState: .loaded, page: self.state.page, searchTerm: searchTermInput)
                                 }
                             }
                         }

@@ -21,7 +21,7 @@ struct CharacterListView: View {
     }
     
     private var content: some View {
-        switch viewModel.state.viewModelState {
+        switch viewModel.state.dataState {
         case .idle:
             return Color.clear.eraseToAnyView()
         case .loading:
@@ -41,7 +41,7 @@ struct CharacterListView: View {
                 ) {
                         VStack(spacing: 10) {
                             Text("\(character.name ?? "")").frame(maxWidth: .infinity, alignment: Alignment.leading)
-                            if self.viewModel.state.viewModelState == .loaded && self.viewModel.state.characters.isLastItem(character) {
+                            if self.viewModel.state.dataState == .loaded && self.viewModel.state.characters.isLastItem(character) {
                                 Divider()
                                 LoadingView()
                             }
